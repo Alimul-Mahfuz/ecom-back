@@ -7,13 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Persistance\**" />
+    <EmbeddedResource Remove="Persistance\**" />
+    <None Remove="Persistance\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\JwtCleanArch.Application\JwtCleanArch.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Data\Migrations\" />
     <Folder Include="Repositories\" />
-    <Folder Include="Persistance\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -11,5 +11,7 @@ namespace JwtCleanArch.Domain.Entities
 
         [ForeignKey("UserId")]
         public string IdentityUserId { get; set; }
+
+        public string? ProfileImagePath { get; set; }
     }
 }

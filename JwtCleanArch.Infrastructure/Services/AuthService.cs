@@ -28,7 +28,7 @@ namespace JwtCleanArch.Infrastructure.Services
             _jwtSettings = jwtSettings.Value;
         }
 
-        public async Task<Result<AuthenticationResponseDto>> RegisterAsync(string email, string password)
+        public async Task<Result<AuthenticationResponseDto>> RegisterAsync(string email, string password, string fullname)
         {
             var existingUser = await _userManager.FindByEmailAsync(email);
             if (existingUser != null)
@@ -51,7 +51,7 @@ namespace JwtCleanArch.Infrastructure.Services
 
             var applicationUser = new ApplicationUser
             {
-                FullName = email,
+                FullName = fullname,
                 Email = email,
                 IdentityUserId = user.Id,
             };
@@ -119,7 +119,6 @@ namespace JwtCleanArch.Infrastructure.Services
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim("security_stamp", securityStamp),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
 
             };
 

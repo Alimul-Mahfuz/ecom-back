@@ -1,3 +1,4 @@
+using JwtCleanArch.Application.Common;
 using JwtCleanArch.Application.Interfaces;
 using JwtCleanArch.Infrastructure.Data;
 using JwtCleanArch.Infrastructure.Services;
@@ -5,6 +6,7 @@ using JwtCleanArch.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
@@ -45,13 +47,52 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
 
-        ClockSkew = TimeSpan.Zero // remove default 5 min tolerance
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            string authorization = context.Request.Headers["Authorization"];
+
+            if (string.IsNullOrEmpty(authorization))
+            {
+                Console.WriteLine("[DEBUG] No Authorization header found.");
+                return Task.CompletedTask;
+            }
+
+            if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                // Extract just the token part
+                var token = authorization.Substring("Bearer ".Length).Trim();
+                Console.WriteLine($"[DEBUG] Cleaned Token: {token}");
+
+                // This ensures the middleware uses the cleaned string
+                context.Token = token;
+            }
+
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"[ERROR] Authentication failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("[SUCCESS] Token validated successfully.");
+            return Task.CompletedTask;
+        }
+    };
+
+
+
 });
 
-
+//Service Providers
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFileUploadService, FIleUploadService>();
 
 
 
@@ -84,11 +125,37 @@ builder.Services.AddSwaggerGen(c =>
 
 });
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy
+            .AllowAnyOrigin()     // this is the correct way
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+        // NO AllowCredentials here
+    });
+});
+
+
+builder.Services.AddAuthorization();
 
 
 
 var app = builder.Build();
+
+var storagePath = Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(storagePath),
+    RequestPath = "/files"
+});
+
+
 
 // Configure Swagger in development
 if (app.Environment.IsDevelopment())
@@ -104,9 +171,29 @@ if (app.Environment.IsDevelopment())
 // Middleware
 app.UseHttpsRedirection();
 
+app.UseCors("CorsPolicy");       // must be after UseRouting
+
+
 app.UseAuthentication(); // Needed for Identity/JWT
 app.UseAuthorization();
 
+app.Use(async (context, next) =>
+{
+    var user = context.User;
+    if (user.Identity?.IsAuthenticated ?? false)
+    {
+        Console.WriteLine($"[AUTH] Request by: {user.Identity.Name}");
+    }
+    else
+    {
+        Console.WriteLine("[AUTH] Request is Anonymous");
+    }
+    await next();
+});
+
+
 app.MapControllers();
+
+
 
 app.Run();

@@ -18,7 +18,7 @@ namespace JwtCleanArch.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(AuthenticationRequestDto dto)
         {
-            var result = await _authService.RegisterAsync(dto.Email, dto.Password);
+            var result = await _authService.RegisterAsync(dto.Email, dto.Password, dto.FullName);
 
             if (!result.Success)
                 return BadRequest(result);

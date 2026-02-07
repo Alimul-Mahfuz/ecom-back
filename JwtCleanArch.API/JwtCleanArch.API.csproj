@@ -33,4 +33,9 @@
     <ProjectReference Include="..\JwtCleanArch.Infrastructure\JwtCleanArch.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Storage\UserProfiles\" />
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>
