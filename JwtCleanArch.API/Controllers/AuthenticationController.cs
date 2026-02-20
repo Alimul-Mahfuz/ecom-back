@@ -1,5 +1,6 @@
 ﻿using JwtCleanArch.Application.DTOs;
 using JwtCleanArch.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JwtCleanArch.API.Controllers
@@ -55,6 +56,7 @@ namespace JwtCleanArch.API.Controllers
 
 
         [HttpPost("logout")]
+        [Authorize]
         public async Task<ActionResult> Logout(string refreshToken)
         {
             try

@@ -165,11 +165,5 @@ namespace JwtCleanArch.API.Controllers
             return result.Success ? Ok(result) : BadRequest(result);
         }
 
-
-
-
-
-
-
     }
 }
